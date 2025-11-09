@@ -1,0 +1,111 @@
+import java.util.*;
+
+public class CleanText {
+
+    static String[] RAW_COMMENTS = {
+        "Java est génial! J'adore Java...",
+        "java, JAVA, JaVa — trop de versions ?",
+        "Les listes en Java sont puissantes; les Sets aussi.",
+        "Map<Map, Map> ? Non merci ; mais les Map simples oui.",
+        "java & python: amour/haine, mais Java reste top."
+    };
+
+    static String STOPWORDS = "est,les,la,le,de,des,en,et,mais,oui,non,trop";
+
+    // Partie A — Chaînes
+    public static String normalize(String s) {
+        // tout en minuscules
+        s = s.toLowerCase();
+        // remplacer ponctuation par espace
+        s = s.replaceAll("[^a-zàâçéèêëîïôûùüÿñæœ0-9]", " ");
+        // supprimer multiples espaces
+        s = s.replaceAll("\\s+", " ").strip();
+        return s;
+    }
+
+    public static List<String> tokens(String s) {
+        return Arrays.asList(normalize(s).split(" "));
+    }
+
+    public static String rebuildSentence(List<String> words) {
+        // reconstruction simple avec StringBuilder
+        StringBuilder sb = new StringBuilder();
+        for (String w : words) {
+            sb.append(w).append(" ");
+        }
+        return sb.toString().strip();
+    }
+
+    // Partie B — Stopwords
+    public static Set<String> buildStopset(String stopwords) {
+        return new HashSet<>(Arrays.asList(stopwords.split(",")));
+    }
+
+    public static List<String> filterStopwords(List<String> words, Set<String> stopset) {
+        List<String> filtered = new ArrayList<>();
+        for (String w : words) {
+            if (!stopset.contains(w)) filtered.add(w);
+        }
+        return filtered;
+    }
+
+    public static void main(String[] args) {
+
+        Set<String> stopset = buildStopset(STOPWORDS);
+        List<String> allWords = new ArrayList<>();
+
+        System.out.println("=== Partie A : Normalisation et Tokens ===");
+        for (String comment : RAW_COMMENTS) {
+            String norm = normalize(comment);
+            System.out.println("Original : " + comment);
+            System.out.println("Normalisé : " + norm);
+
+            List<String> toks = tokens(comment);
+            System.out.println("Tokens : " + toks);
+
+            String rebuilt = rebuildSentence(toks);
+            System.out.println("Reconstruit : " + rebuilt);
+
+            List<String> filtered = filterStopwords(toks, stopset);
+            allWords.addAll(filtered);
+            System.out.println("Filtré stopwords : " + filtered);
+            System.out.println();
+        }
+
+        // Partie B — Collections
+        System.out.println("=== Partie B : Sets ===");
+        Set<String> hashSet = new HashSet<>(allWords);          // rapide, non trié
+        Set<String> treeSet = new TreeSet<>(allWords);          // trié alphabétiquement
+        Set<String> linkedHashSet = new LinkedHashSet<>(allWords); // ordre apparition
+
+        System.out.println("HashSet : " + hashSet);
+        System.out.println("TreeSet : " + treeSet);
+        System.out.println("LinkedHashSet : " + linkedHashSet);
+
+        // Partie C — Fréquences
+        System.out.println("\n=== Partie C : Fréquences ===");
+        Map<String, Integer> freq = new HashMap<>();
+        for (String w : allWords) {
+            freq.put(w, freq.getOrDefault(w, 0) + 1);
+        }
+        for (String w : freq.keySet()) {
+            System.out.println(w + " : " + freq.get(w));
+        }
+
+        // Index inverse
+        System.out.println("\n=== Index inverse ===");
+        Map<String, Set<Integer>> index = new HashMap<>();
+        for (int i = 0; i < RAW_COMMENTS.length; i++) {
+            List<String> filtered = filterStopwords(tokens(RAW_COMMENTS[i]), stopset);
+            for (String w : filtered) {
+                index.putIfAbsent(w, new TreeSet<>()); // TreeSet pour indices triés
+                index.get(w).add(i);
+            }
+        }
+
+        String[] sampleWords = {"java", "map", "listes", "python", "sets"};
+        for (String w : sampleWords) {
+            System.out.println(w + " → " + index.get(w));
+        }
+    }
+}
